@@ -1,11 +1,11 @@
-const DEEPSEEK_API_KEY = "sk-4120e865556243daab04300f2fb50bf4"; 
-const MOONSHOT_API_KEY = "sk-2yCCvWHsbiyeVU76Iilj8cjMv4weELNbCYc6w732wQt7EgXu"; 
+const DEEPSEEK_API_KEY = "sk-4120e865556243daab04300f2fb50bf4";
+const MOONSHOT_API_KEY = "sk-2yCCvWHsbiyeVU76Iilj8cjMv4weELNbCYc6w732wQt7EgXu";
 
 const aiConfigs = {
     deepseek: {
         apiKey: DEEPSEEK_API_KEY,
         apiURL: "https://api.deepseek.com/chat/completions",
-        modelName: "deepseek-chat" 
+        modelName: "deepseek-chat"
     },
     moonshot: {
         apiKey: MOONSHOT_API_KEY,
@@ -17,7 +17,7 @@ const aiConfigs = {
 let userSettings = {};
 
 // ===================================
-//  DOM 元素引用 (这部分保持不变)
+//  DOM 元素引用
 // ===================================
 const setupContainer = document.getElementById('setup-container');
 const uploadContainer = document.getElementById('upload-container');
@@ -40,14 +40,14 @@ const finalResults = document.getElementById('final-results');
 const resultsList = document.getElementById('results-list');
 
 // ===================================
-//  初始化 pdf.js (这部分保持不变)
+//  初始化 pdf.js
 // ===================================
 if (window.pdfjsLib) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
 }
 
 // ===================================
-//  事件监听器 (这部分保持不变)
+//  事件监听器
 // ===================================
 nextToUploadBtn.addEventListener('click', () => {
     userSettings = {
@@ -81,7 +81,7 @@ restartBtn.addEventListener('click', () => {
 });
 
 // ===================================
-//  视图和UI更新函数 (这部分保持不变)
+//  视图和UI更新函数
 // ===================================
 function showView(view) {
     setupContainer.style.display = 'none';
@@ -155,7 +155,7 @@ async function analyzePDF(file, resultCard) {
         const preprocPrompt = buildPreprocessingPrompt();
         const cleanedData = JSON.parse(await callAI('deepseek', ocrText, preprocPrompt, { jsonResponse: true, maxTokens: 2000 }));
         const cleanTextForAnalysis = `题目部分：\n${cleanedData.question_text}\n\n学生解答部分：\n${cleanedData.answer_text}`;
-        
+
         updateLoadingStatus(`[${file.name}] 步骤 3/4: 初级评委正在独立评审...`);
         const juniorPrompt = buildJuniorJudgePrompt();
         const [reviewA_json, reviewB_json] = await Promise.all([
@@ -180,29 +180,25 @@ async function analyzePDF(file, resultCard) {
         - 题目解析评估: ${JSON.stringify(reviewB.problem_analysis_evaluation)}
         `;
         const finalResultJson = await callAI('deepseek', arbitrationContent, arbitrationPrompt, { jsonResponse: true, maxTokens: 4000 });
-        
-        // ✨✨✨ 关键修正：在解析之前，不进行任何处理！让Prompt来保证JSON的合法性 ✨✨✨
         const finalResult = JSON.parse(finalResultJson);
-        
+
         updateResultsUI(resultCard, finalResult);
 
     } catch (error) {
         console.error(`处理文件 ${file.name} 时发生严重错误:`, error);
-        // ✨ 同时在UI上显示更详细的错误，方便调试
         const errorMessage = `错误类型: ${error.name}. 错误信息: ${error.message}. 请检查浏览器控制台获取更多信息。`;
         updateResultsUI(resultCard, null, true, errorMessage);
     }
 }
 
 async function callAI(modelKey, userContent, systemPrompt, options = {}) {
-    // ... 函数内容保持不变 ...
     const { jsonResponse = false, maxTokens = 1500 } = options;
     const config = aiConfigs[modelKey];
     if (!config) throw new Error(`未找到名为'${modelKey}'的AI模型配置`);
 
     const body = {
         model: config.modelName,
-        messages: [{ role: 'system', content: systemPrompt },{ role: 'user', content: userContent }],
+        messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userContent }],
         temperature: 0.1,
         max_tokens: maxTokens,
     };
@@ -210,7 +206,7 @@ async function callAI(modelKey, userContent, systemPrompt, options = {}) {
 
     const response = await fetch(config.apiURL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}`},
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
         body: JSON.stringify(body)
     });
 
@@ -224,11 +220,10 @@ async function callAI(modelKey, userContent, systemPrompt, options = {}) {
 }
 
 // ===================================
-//  提示词构建函数们 (核心改动在这里)
+//  提示词构建函数们 (Prompts)
 // ===================================
 
 function buildPreprocessingPrompt() {
-    // ... 函数内容保持不变 ...
     return `你是一个顶级的OCR文本校对专家，尤其擅长处理包含手写数学公式的作业。你的任务是接收一段通过OCR识别后的、混乱的文本，然后将其清理、校对和结构化。
     1. **移除无关内容**: 删除所有广告、水印文字（例如 "夸克扫描王" 等）。
     2. **修正识别错误**: 根据上下文修正明显的OCR识别错误。
@@ -239,7 +234,6 @@ function buildPreprocessingPrompt() {
 }
 
 function buildJuniorJudgePrompt() {
-    // ... 函数内容保持不变 ...
     return `你是一位严谨客观的数学AI助教。请根据学生提交的作业内容，按照以下规则进行评分和分析。
 本题满分10分。
 **评分规则:**
@@ -271,9 +265,7 @@ function buildJuniorJudgePrompt() {
 }`;
 }
 
-// ✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
-// ✨               核心改动在这里             ✨
-// ✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
+// ✨ 用户原始的Prompt，未做任何修改 ✨
 function buildArbitrationPrompt() {
     return `你是一位资深的首席学术仲裁官... (前面部分省略) ...
 
@@ -304,9 +296,7 @@ function buildArbitrationPrompt() {
 `;
 }
 
-
 async function extractTextViaOCR(file, ocrProgressCallback) {
-    // ... 函数内容保持不变 ...
     const worker = await Tesseract.createWorker('chi_sim+eng', 1, {
         logger: m => { if (ocrProgressCallback) ocrProgressCallback(m); },
     });
@@ -314,7 +304,7 @@ async function extractTextViaOCR(file, ocrProgressCallback) {
     const pdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let fullText = '';
     for (let i = 1; i <= pdfDoc.numPages; i++) {
-        ocrProgressCallback({ status: `渲染第 ${i}/${pdfDoc.numPages} 页...`, progress: (i-1)/pdfDoc.numPages });
+        ocrProgressCallback({ status: `渲染第 ${i}/${pdfDoc.numPages} 页...`, progress: (i - 1) / pdfDoc.numPages });
         const page = await pdfDoc.getPage(i);
         const viewport = page.getViewport({ scale: 2.0 });
         const canvas = document.createElement('canvas');
@@ -331,12 +321,10 @@ async function extractTextViaOCR(file, ocrProgressCallback) {
 }
 
 
-// ✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
-// ✨               核心改动在这里             ✨
-// ✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
+// ✨ 核心修正：UI更新函数（已移除强制白色背景的样式）✨
 function updateResultsUI(resultCard, data, isError = false, errorMessage = '') {
     const resultContentEl = resultCard.querySelector('.result-content');
-    
+
     if (isError || !data) {
         resultContentEl.innerHTML = `<p><strong>分析失败:</strong> ${errorMessage || '未知错误'}</p>`;
         resultCard.classList.add('error');
@@ -347,55 +335,41 @@ function updateResultsUI(resultCard, data, isError = false, errorMessage = '') {
     const errorReason = data.error_reason;
     const analysis = data.problem_analysis;
     const evaluation = data.evaluation;
-    const maxScore = 10; 
+    const maxScore = 10; // 假设满分是10，可以根据 userSettings 动态调整
 
-    // ✨ 第二步：还原LaTeX ✨
-    // AI为了生成合法JSON，输出了 "\\frac" 和 "\\n"。
-    // JSON.parse后，它们在JS字符串里变成了 "\\frac" 和 "\\n"。
-    // 我们需要把它们还原成KaTeX认识的 "\frac" 和 HTML认识的 "<br>"。
-    const processedDerivation = analysis.derivation_process
-                                  .replace(/\\\\/g, "\\") // 将双反斜杠 \\ 还原成单反斜杠 \
-                                  .replace(/\\n/g, '<br/>'); // 将字符串 \n 转换成换行标签
-
+    // 关键修复：在填充时，处理LaTeX转义字符和换行符
+    // 1. 将 `\\` 替换回 `\`，让KaTeX可以识别
+    // 2. 将 `\n` 替换成 `<br/>`，让HTML可以换行
     resultContentEl.innerHTML = `
         <p><strong>得分：</strong><span class="score">${score} / ${maxScore}</span></p>
         
         <p><strong>错误原因：</strong></p>
-        <div class="analysis-block">${errorReason}</div>
+        <div class="analysis-block">${errorReason.replace(/\\\\/g, "\\").replace(/\\n/g, '<br/>')}</div>
         
         <p><strong>题目解析：</strong></p>
         <ul class="errors">
-            <li><strong>题目已知条件:</strong> ${analysis.known_conditions}</li>
-            <li><strong>关键公式:</strong> ${analysis.key_formulas}</li>
+            <li><strong>题目已知条件:</strong> ${analysis.known_conditions.replace(/\\\\/g, "\\").replace(/\\n/g, '<br/>')}</li>
+            <li><strong>关键公式:</strong> ${analysis.key_formulas.replace(/\\\\/g, "\\").replace(/\\n/g, '<br/>')}</li>
             <li>
                 <strong>推导过程:</strong>
-                <div class="derivation-process">${processedDerivation}</div>
+                <div class="derivation-process">${analysis.derivation_process.replace(/\\\\/g, "\\").replace(/\\n/g, '<br/>')}</div>
             </li>
-            <li><strong>常见错误:</strong> ${analysis.common_mistakes}</li>
+            <li><strong>常见错误:</strong> ${analysis.common_mistakes.replace(/\\\\/g, "\\").replace(/\\n/g, '<br/>')}</li>
         </ul>
 
         <p><strong>综合评价：</strong></p>
-        <div class="evaluation-block">${evaluation}</div>
+        <div class="evaluation-block">${evaluation.replace(/\\\\/g, "\\").replace(/\\n/g, '<br/>')}</div>
     `;
 
-    // 样式部分保持不变
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .analysis-block, .evaluation-block {
-            background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;
-            margin-bottom: 1rem; line-height: 1.6;
-        }
-        .derivation-process { word-wrap: break-word; }
-    `;
-    resultContentEl.appendChild(style);
+    // 移除了动态添加 <style> 标签的部分，问题就在这里！
 
-    // 渲染部分保持不变
+    // ✨ 最关键的一步：在所有内容都插入到页面后，手动调用KaTeX渲染 ✨
     renderMathInElement(resultContentEl, {
         delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '\\[', right: '\\]', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\(', right: '\\)', display: false}
+            { left: '$$', right: '$$', display: true },
+            { left: '\\[', right: '\\]', display: true },
+            { left: '$', right: '$', display: false },
+            { left: '\\(', right: '\\)', display: false }
         ],
         throwOnError: false
     });
